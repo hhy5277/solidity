@@ -83,8 +83,8 @@ function setup
   local branch="$2"
   local dir="$3"
 
-  setup_solcjs $dir
-  download_project $repo $branch $dir
+  setup_solcjs "$dir"
+  download_project "$repo" "$branch" "$dir"
 
   replace_version_pragmas
 }
@@ -167,27 +167,26 @@ function clean
 
 # Since Zeppelin 2.1.1 it supports Solidity 0.5.0.
 printTask "Testing Zeppelin..."
-(
 echo "==========================="
 DIR=$(mktemp -d)
 (
-  setup https://github.com/OpenZeppelin/openzeppelin-solidity.git master $DIR
+  setup https://github.com/OpenZeppelin/openzeppelin-solidity.git master "$DIR"
 
   npm install
 
   CONFIG="truffle-config.js"
 
   replace_libsolc_call
-  force_solc_truffle_modules $SOLJSON
-  force_solc $CONFIG $DIR
+  force_solc_truffle_modules "$SOLJSON"
+  force_solc "$CONFIG" "$DIR"
 
   for optimize in "{ enabled: false }" "{ enabled: true }" "{ enabled: true, details: { yul: true } }"
   do
     clean
-    force_solc_settings $CONFIG "$optimize"
+    force_solc_settings "$CONFIG" "$optimize" "petersburg"
 
     npx truffle compile
-    verify_compiler_version $SOLCVERSION
+    verify_compiler_version "$SOLCVERSION"
     npm run test
   done
 )
@@ -198,22 +197,22 @@ printTask "Testing GnosisSafe..."
 echo "==========================="
 DIR=$(mktemp -d)
 (
-  setup https://github.com/gnosis/safe-contracts.git development $DIR
+  setup https://github.com/gnosis/safe-contracts.git development "$DIR"
 
   npm install
 
   CONFIG=$(find_truffle_config)
 
-  force_solc_truffle_modules $SOLJSON
-  force_solc "$CONFIG" $DIR
+  force_solc_truffle_modules "$SOLJSON"
+  force_solc "$CONFIG" "$DIR"
 
   for optimize in "{ enabled: false }" "{ enabled: true }" "{ enabled: true, details: { yul: true } }"
   do
     clean
-    force_solc_settings $CONFIG "$optimize" "petersburg"
+    force_solc_settings "$CONFIG" "$optimize" "petersburg"
 
     npx truffle compile
-    verify_compiler_version $SOLCVERSION
+    verify_compiler_version "$SOLCVERSION"
     npm test
   done
 )
@@ -224,24 +223,24 @@ printTask "Testing ColonyNetwork..."
 echo "==========================="
 DIR=$(mktemp -d)
 (
-  setup https://github.com/JoinColony/colonyNetwork.git develop $DIR
+  setup https://github.com/JoinColony/colonyNetwork.git develop "$DIR"
 
   yarn
   git submodule update --init
 
   CONFIG=$(find_truffle_config)
 
-  force_solc_truffle_modules $SOLJSON
-  force_solc $CONFIG $DIR
+  force_solc_truffle_modules "$SOLJSON"
+  force_solc "$CONFIG" "$DIR"
 
   # Colony tests fail with out-of-gas if optimizer is disabled.
   for optimize in "{ enabled: true }" "{ enabled: true, details: { yul: true } }"
   do
     clean
-    force_solc_settings $CONFIG "$optimize"
+    force_solc_settings "$CONFIG" "$optimize" "petersburg"
 
     yarn run provision:token:contracts
-    verify_compiler_version $SOLCVERSION
+    verify_compiler_version "$SOLCVERSION"
     yarn run test:contracts
   done
 )
